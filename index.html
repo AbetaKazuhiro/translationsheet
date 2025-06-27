@@ -8,6 +8,10 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
     <style>
         .icon-plus::before { content: "+"; }
         .icon-edit::before { content: "✏️"; }
@@ -22,7 +26,23 @@
 <body>
     <div id="root"></div>
     
-    <script type="text/babel">
+    
+<script type="text/babel">
+// Firebase初期化
+const firebaseConfig = {
+  apiKey: "AIzaSyD0mWglHMmjmPOBpRq9N4QKXJTvBepofDw",
+  authDomain: "traslationsheet.firebaseapp.com",
+  projectId: "traslationsheet",
+  storageBucket: "traslationsheet.firebasestorage.app",
+  messagingSenderId: "567671699687",
+  appId: "1:567671699687:web:b1d846b9355dcd61438a42",
+  measurementId: "G-9V0TERM60S"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+</script>
+
+<script type="text/babel">
         const { useState, useEffect, useCallback } = React;
 
         const TranslationManagementTool = () => {
