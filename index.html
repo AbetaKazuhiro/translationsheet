@@ -1,0 +1,436 @@
+import React, { useState, useEffect } from 'react';
+import { Plus, Edit2, Save, X, Calendar, Trash2, ZoomIn, ZoomOut } from 'lucide-react';
+
+const TranslationManagementTool = () => {
+  const [appidOptions] = useState([
+    'arifure', 'negima', 'highschool', 'slime', 'doraemon', 'tenken', 'shinchan', 
+    'binan', 'kakegurui', 'ossan', 'dragon', 'ansatsu', 'maoretry', 'newgate', 
+    'kusuriya', 'hotd', 'isesuma', 'wixoss', 'ikki', 'shakugan', 'deathma', 
+    'kabaneri', 'reinna', 'hataraku'
+  ]);
+  
+  const [tasks, setTasks] = useState([
+    {
+      id: 1,
+      appid: 'shinchan',
+      category: '広告',
+      text: 'このゲーム深い...。',
+      english: false,
+      korean: true,
+      traditional: true,
+      deadline: '6/27',
+      status: 'active'
+    },
+    {
+      id: 2,
+      appid: 'tsukimichi',
+      category: 'プロモ',
+      text: '🏹【コラボ予告】',
+      english: true,
+      korean: true,
+      traditional: false,
+      deadline: '6/30',
+      status: 'active'
+    },
+    {
+      id: 3,
+      appid: 'tsukimichi',
+      category: 'プロモ',
+      text: '暗殺姫3人が完全オリジナル衣装で登場！',
+      english: true,
+      korean: true,
+      traditional: false,
+      deadline: '6/30',
+      status: 'active'
+    },
+    {
+      id: 4,
+      appid: 'ossan',
+      category: 'プロモ',
+      text: '「新米オッサン冒険者、オリハルコンソウル」は、',
+      english: false,
+      korean: false,
+      traditional: true,
+      deadline: '6/27',
+      status: 'active'
+    },
+    {
+      id: 5,
+      appid: 'doraemon',
+      category: 'プロモ',
+      text: '事前登録10万件突破！',
+      english: true,
+      korean: true,
+      traditional: true,
+      deadline: '6/30',
+      status: 'completed'
+    }
+  ]);
+
+  const [editingId, setEditingId] = useState(null);
+  const [editingField, setEditingField] = useState(null);
+  const [editValue, setEditValue] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [tableScale, setTableScale] = useState(1);
+  const [tableWidth, setTableWidth] = useState(100);
+  const [customAppid, setCustomAppid] = useState('');
+  const [activeTab, setActiveTab] = useState('active'); // 'active' or 'completed'
+
+  const startEdit = (taskId, field, currentValue) => {
+    setEditingId(taskId);
+    setEditingField(field);
+    setEditValue(currentValue);
+  };
+
+  const saveEdit = () => {
+    setTasks(tasks.map(task => 
+      task.id === editingId 
+        ? { ...task, [editingField]: editValue }
+        : task
+    ));
+    setEditingId(null);
+    setEditingField(null);
+    setEditValue('');
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingField(null);
+    setEditValue('');
+  };
+
+  const toggleLanguage = (taskId, language) => {
+    setTasks(currentTasks => {
+      return currentTasks.map(task => {
+        if (task.id === taskId) {
+          const updatedTask = { ...task, [language]: !task[language] };
+          
+          // 英韓繁すべてがtrueになったら完了タブに移動
+          if (updatedTask.english && updatedTask.korean && updatedTask.traditional) {
+            return { ...updatedTask, status: 'completed' };
+          }
+          
+          return updatedTask;
+        }
+        return task;
+      });
+    });
+  };
+
+  const addInlineTask = () => {
+    const newId = Math.max(...tasks.map(t => t.id)) + 1;
+    const newTask = {
+      id: newId,
+      appid: '',
+      category: '広告',
+      text: '',
+      english: false,
+      korean: false,
+      traditional: false,
+      deadline: '',
+      status: 'active'
+    };
+    setTasks([...tasks, newTask]);
+  };
+
+  const deleteTask = (taskId) => {
+    setTasks(tasks.filter(task => task.id !== taskId));
+  };
+
+  const updateTask = (taskId, field, value) => {
+    setTasks(tasks.map(task => 
+      task.id === taskId 
+        ? { ...task, [field]: value }
+        : task
+    ));
+  };
+
+  const filteredTasks = tasks.filter(task => task.status === activeTab);
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-3xl font-bold text-gray-900">翻訳依頼</h1>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">表幅:</span>
+                  <input
+                    type="range"
+                    min="80"
+                    max="200"
+                    value={tableWidth}
+                    onChange={(e) => setTableWidth(Number(e.target.value))}
+                    className="w-20"
+                  />
+                  <span className="text-sm text-gray-600 min-w-[50px]">{tableWidth}%</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">拡大:</span>
+                  <button
+                    onClick={() => setTableScale(Math.max(0.7, tableScale - 0.1))}
+                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="表を縮小"
+                  >
+                    <ZoomOut className="w-4 h-4" />
+                  </button>
+                  <span className="text-sm text-gray-600 min-w-[60px] text-center">
+                    {Math.round(tableScale * 100)}%
+                  </span>
+                  <button
+                    onClick={() => setTableScale(Math.min(1.3, tableScale + 0.1))}
+                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="表を拡大"
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <button
+                onClick={addInlineTask}
+                className={`bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors ${
+                  activeTab === 'completed' ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                disabled={activeTab === 'completed'}
+              >
+                <Plus className="w-4 h-4" />
+                新規追加
+              </button>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`px-6 py-3 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === 'active' 
+                  ? 'bg-blue-600 text-white shadow-md' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              作業中 ({tasks.filter(t => t.status === 'active').length})
+            </button>
+            <button
+              onClick={() => setActiveTab('completed')}
+              className={`px-6 py-3 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === 'completed' 
+                  ? 'bg-green-600 text-white shadow-md' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              完了 ({tasks.filter(t => t.status === 'completed').length})
+            </button>
+          </div>
+
+          {/* Filters */}
+          <div className="flex gap-2">
+            <span className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-100 text-blue-700">
+              {activeTab === 'active' ? '作業中' : '完了済み'}: {filteredTasks.length} 件
+            </span>
+          </div>
+        </div>
+
+        {/* Task Table */}
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="overflow-x-auto overflow-y-visible" style={{ maxHeight: '70vh' }}>
+            <div 
+              style={{ 
+                transform: `scale(${tableScale})`, 
+                transformOrigin: 'top left',
+                width: `${tableWidth}%`,
+                minWidth: '1200px'
+              }}
+            >
+              <table className="w-full table-fixed">
+                <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
+                  <tr>
+                    <th className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">appid</th>
+                    <th className="w-24 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">カテゴリ</th>
+                    <th className="flex-1 min-w-80 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">テキスト（1行で書いてください）</th>
+                    <th className="w-16 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">英</th>
+                    <th className="w-16 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">韓</th>
+                    <th className="w-16 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">繁</th>
+                    <th className="w-28 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">納期</th>
+                    <th className="w-20 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredTasks.map((task) => (
+                    <tr key={task.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {editingId === task.id && editingField === 'appid' ? (
+                          <div className="flex flex-col gap-2">
+                            <select
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              className="border rounded px-2 py-1 text-sm"
+                              autoFocus
+                            >
+                              <option value="">選択してください</option>
+                              {appidOptions.map(option => (
+                                <option key={option} value={option}>{option}</option>
+                              ))}
+                            </select>
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="text"
+                                value={customAppid}
+                                onChange={(e) => setCustomAppid(e.target.value)}
+                                placeholder="カスタム入力"
+                                className="border rounded px-2 py-1 text-sm flex-1"
+                              />
+                              <button 
+                                onClick={() => setEditValue(customAppid)}
+                                className="text-blue-600 hover:text-blue-700 text-xs px-2 py-1 border rounded"
+                                disabled={!customAppid}
+                              >
+                                使用
+                              </button>
+                            </div>
+                            <div className="flex gap-1">
+                              <button onClick={saveEdit} className="text-green-600 hover:text-green-700">
+                                <Save className="w-4 h-4" />
+                              </button>
+                              <button onClick={cancelEdit} className="text-red-600 hover:text-red-700">
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 group">
+                            <span className="text-sm font-medium text-gray-900">{task.appid}</span>
+                            <button
+                              onClick={() => startEdit(task.id, 'appid', task.appid)}
+                              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 transition-opacity"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <select
+                          value={task.category}
+                          onChange={(e) => updateTask(task.id, 'category', e.target.value)}
+                          className="text-sm text-gray-600 bg-transparent border-0 cursor-pointer hover:bg-gray-50 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="広告">広告</option>
+                          <option value="プロモ">プロモ</option>
+                        </select>
+                      </td>
+                      <td className="px-6 py-4">
+                        {editingId === task.id && editingField === 'text' ? (
+                          <div className="flex items-center gap-2">
+                            <textarea
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              className="border rounded px-2 py-1 text-sm w-full"
+                              autoFocus
+                              rows={2}
+                            />
+                            <div className="flex flex-col gap-1">
+                              <button onClick={saveEdit} className="text-green-600 hover:text-green-700">
+                                <Save className="w-4 h-4" />
+                              </button>
+                              <button onClick={cancelEdit} className="text-red-600 hover:text-red-700">
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-start gap-2 group">
+                            <span className="text-sm text-gray-900 leading-relaxed">{task.text}</span>
+                            <button
+                              onClick={() => startEdit(task.id, 'text', task.text)}
+                              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 transition-opacity mt-1"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <input
+                          type="checkbox"
+                          checked={task.english}
+                          onChange={() => toggleLanguage(task.id, 'english')}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                          disabled={activeTab === 'completed'}
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <input
+                          type="checkbox"
+                          checked={task.korean}
+                          onChange={() => toggleLanguage(task.id, 'korean')}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                          disabled={activeTab === 'completed'}
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <input
+                          type="checkbox"
+                          checked={task.traditional}
+                          onChange={() => toggleLanguage(task.id, 'traditional')}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                          disabled={activeTab === 'completed'}
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {editingId === task.id && editingField === 'deadline' ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="date"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              className="border rounded px-2 py-1 text-sm"
+                              autoFocus
+                            />
+                            <button onClick={saveEdit} className="text-green-600 hover:text-green-700">
+                              <Save className="w-4 h-4" />
+                            </button>
+                            <button onClick={cancelEdit} className="text-red-600 hover:text-red-700">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 group">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm text-gray-600">{task.deadline}</span>
+                            </div>
+                            <button
+                              onClick={() => startEdit(task.id, 'deadline', task.deadline)}
+                              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 transition-opacity"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <button
+                          onClick={() => deleteTask(task.id)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded transition-colors"
+                          title="削除"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TranslationManagementTool;
